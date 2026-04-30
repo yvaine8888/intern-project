@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta id="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Banking System</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <nav class="navbar">
+    <div class="nav-container">
+      <a href="#hero" class="nav-logo">
+        <span class="logo-icon">&#128176;</span>
+        <span class="logo-text">Bank<span class="logo-accent">System</span></span>
+      </a>
+      <button class="nav-cta" id="logout">Logout</button>
+    </div>
+  </nav>
+
+  <section class="center" id="adminScreen">
+      <h1>What would you like to do?</h1> <br>
+      <button type="button" id="openButton">Open Account</button> <br>
+      <button type="button" id="closeButton">Closs Account</button> <br>
+      <button type="button" id="modifyButton">Modify Account</button>
+  </section>
+
+  <section class="hidden" id="openScreen">
+      <input type="text" id="name" placeholder="Enter username"> <br>
+      <input type="text" id="pin" placeholder="Enter password"> <br>
+      <button type="button" id="openEnter">Enter</button> <br>
+      <button class="back">Back</button>
+  </section>
+
+  <section class="hidden" id="result">
+      <h1 id="textResult"></h1><br>
+      <button class="back">Back</button>
+  </section>
+
+  <section class="hidden" id="closeScreen">
+      <input type="text" id="pin" placeholder="Enter account pin"> <br>
+      <button type="button" id="closeEnter">Enter</button> <br>
+      <button class="back">Back</button>
+  </section>
+
+  <section class="hidden" id="modifyScreen">
+    <div id="pinInput">
+      <input type="text" id="pin" placeholder="Enter account pin"> <br>
+      <button type="button" id="pinEnter">Enter</button> <br>
+      </div>
+      <div class="hidden" id="modifyInput">
+            <input type="text" id="nameChange" placeholder="Enter new name"> <br>
+            <input type="text" id="passwordChange" placeholder="Enter new password"> <br>
+            <button type="button" id="modifyEnter">Enter</button> <br>
+      </div>
+      <button class="back">Back</button>
+  </section>
+
+  <script src="admin.js"></script>
+</body>
+</html>
