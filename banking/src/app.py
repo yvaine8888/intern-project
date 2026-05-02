@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import mysql.connector
 from flask_cors import CORS
+import random
 
 app = Flask(__name__)
 CORS(app)
@@ -12,11 +13,11 @@ def unique_number():
 
     while True:
         num = random.randint(100000, 999999)
-        query = ('SELECT * FROM adminaccount WHERE pin = %s')
-        cursor.execute(query, (num))
+        query = ('SELECT * FROM adminaccounts WHERE pin = %s')
+        cursor.execute(query, (num,))
         if cursor.fetchone() == None:
-            query = ('SELECT * FROM adminaccount WHERE Account = %s')
-            cursor.execute(query, (num))
+            query = ('SELECT * FROM useraccounts WHERE pin = %s')
+            cursor.execute(query, (num,))
             if cursor.fetchone() == None:
                 break
     cursor.close()
@@ -91,13 +92,50 @@ def close():
     cursor = connection.cursor()
 
     query = ('DELETE FROM adminaccounts WHERE pin = %s')
-    cursor.execute(query, (data))
+    cursor.execute(query, (data,))
     connection.commit()
 
     query = ('DELETE FROM useraccounts WHERE pin = %s')
-    cursor.execute(query, (data))
+    cursor.execute(query, (data,))
     connection.commit()
     
+    cursor.close()
+    connection.close()
+
+@app.route('/api/modify-account', methods=['POST'])
+def modify():
+    data = request.get_json()
+    account = data.account
+    name = data.name
+    password = data.password
+    role = 'admin'
+
+    connection = mysql.connector.connect(user = "root", database = "bankingsystem", 
+    password = "x1321PF@33")
+    cursor = connection.cursor()
+
+    query = ('SELECT * FROM adminaccounts WHERE pin = %s')
+
+    cursor.execute(query, (username, account,))
+    found = cursor.fetchone()
+
+    if found == None:
+        query = ('SELECT * FROM useraccounts WHERE pin = %s')
+        cursor.execute(query, (username, account,))
+        found = cursor.fetchone()
+        if found == None:
+            return jsonify({"error": "Invalid account."})
+        role = 'user'
+
+    if name != "":
+        query = (f'UPDATE {role}accounts SET name = %s WHERE pin = %s')
+        cursor.execute(query, (name, account))
+        connection.commit()
+
+    if password != "":
+        query = (f'UPDATE {role}accounts SET Password = %s WHERE pin = %s')
+        cursor.execute(query, (password, account))
+        connection.commit()
     cursor.close()
     connection.close()
 
