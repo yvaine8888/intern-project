@@ -11,58 +11,74 @@ function App() {
   const [newRole, setNewRole] = useState('');
 
   const reset = () => {
-    setAccountNum() = "";
-    setPin() = "";
-    setNewName() = "";
-    setNewRole() = "";
+    setAccountNum("");
+    setPin("");
+    setNewName("");
+    setNewRole("");
   }
 
-  const logging = async () => {
+  const removeAfterDelay = (element) => {
+    setTimeout(() => {
+      if (element) {
+        element.remove();
+      }
+    }, 3000);
+  }
+
+  const logging = async (e) => {
+    if (e) e.preventDefault();
     const loginInfo = {
       role: role,
       account: accountNum,
       password: pin
     }
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+      const response = await fetch('http://127.0.0.1:5001/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginInfo),
       });
       const data = await response.json();
-      if (response.ok)
+      if (data.status == "ok")
       {
           setCurrentScreen(role);
-          setName(data.messsage);
-          document.getElementById(role + "Welcome").textContent = "Welcome, " + name + "!";
-          reset();
+          setName(data.message);
       }
       else
       {
-        alert("Login failed.");
+        const p = document.createElement('p');
+        p.textContent = 'Login Failed';
+        const section = document.querySelector('#loginScreen');
+        section.prepend(p);
+        removeAfterDelay(p);
       }
     } catch (error) {
       console.error("Error connecting to Python:", error);
     }
+    reset();
   };
 
   const createAccount = async () => {
     const createInfo = {
       role: newRole,
-      name: name,
+      name: newName,
       password: pin
     }
     try {
-      const response = await fetch('http://localhost:5000/api/create-account', {
+      const response = await fetch('http://127.0.0.1:5001/api/create-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(createInfo),
       });
       const data = await response.json();
-      if (response.ok)
+      if (data.status == "ok")
       {
           setCurrentScreen('admin');
-          alert('Created ${newRole} account ${data.messsage}');
+          const p = document.createElement('p');
+          p.textContent = `Created ${newRole} account ${data.message}`;
+          const section = document.querySelector('#adminScreen');
+          section.prepend(p);
+          removeAfterDelay(p);
       }
       else
       {
@@ -76,12 +92,13 @@ function App() {
 
   const closeAccount = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/close-account', {
+      const response = await fetch('http://127.0.0.1:5001/api/close-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(accountNum),
       });
-      if (response.ok)
+      const data = await response.json();
+      if (data.status == "ok")
       {
           setCurrentScreen('admin');
           alert('Closed account ${accountNum}');
@@ -103,12 +120,13 @@ function App() {
       password: pin
     }
     try {
-      const response = await fetch('http://localhost:5000/api/modify-account', {
+      const response = await fetch('http://127.0.0.1:5001/api/modify-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(modifyInfo),
       });
-      if (response.ok)
+      const data = await response.json();
+      if (data.status == "ok")
       {
           setCurrentScreen('admin');
           alert('Modify account ${accountNum}');
@@ -128,7 +146,7 @@ function App() {
       {currentScreen === 'role' && (
         <section id="roleScreen">
           <h1>Welcome to this Online Banking System!</h1>
-          <p>Are you an admin or user?</p>
+          <h3>Are you an admin or user?</h3>
           <button onClick={() => {setCurrentScreen('login'); setRole('admin')}}>
             Administrator
           </button>
@@ -152,14 +170,14 @@ function App() {
           placeholder="Enter PIN" 
           value={pin} 
           onChange={(e) => setPin(e.target.value)} />
-          <button onClick={() => logging()}>Login</button>
+          <button onClick={(e) => logging(e)}>Login</button>
           <button onClick={() => setCurrentScreen('role')}>Go Back</button>
         </section>
       )}
 
       {currentScreen === 'admin' && (
         <section id="adminScreen">
-          <h1 id = "adminWelcome">Welcome</h1>
+          <h1>Welcome, {name}!</h1>
           <h1>What would you like to do?</h1>
           <button onClick={() => setCurrentScreen('open')}> Open Account </button>
           <button onClick={() => setCurrentScreen('close')}> Close Account </button>
@@ -214,7 +232,7 @@ function App() {
           placeholder="Enter account number" 
           value={accountNum} 
           onChange={(e) => setAccountNum(e.target.value)} />
-          <p>Do not need to fill in all.</p>
+          <h3>Do not need to fill in all.</h3>
         <input 
           type="text" 
           placeholder="Enter new name" 

@@ -4,3 +4,16 @@ section {
   align-items: center; 
   margin-top: 100px  
 }
+
+p {
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  background-color: #a72828; 
+  color: white; 
+  text-align: center; 
+  padding: 12px; 
+  font-family: sans-serif;
+  z-index: 9999;
+}
