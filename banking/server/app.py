@@ -79,10 +79,10 @@ def create():
     cursor = db.cursor()
     query = ""
     pin = unique_number()
-    if role is 'admin':
+    if role == 'admin':
         query = ('INSERT INTO adminaccounts (name, pin, password) VALUES (%s, %s, %s)')
         record = (username, pin, password)
-    elif role is 'user':
+    elif role == 'user':
         query = ('INSERT INTO useraccounts (name, pin, password, amount) VALUES (%s, %s, %s, %s)')
         record = (username, pin, password, 0)
     else:
@@ -105,14 +105,14 @@ def close():
     cursor = db.cursor()
 
     query = ('SELECT * FROM adminaccounts WHERE pin = %s')
-    cursor.execute(query, (username, data,))
+    cursor.execute(query, (data,))
     found = cursor.fetchone()
 
     query = ('SELECT * FROM useraccounts WHERE pin = %s')
-    cursor.execute(query, (username, data,))
-    found += cursor.fetchone()
+    cursor.execute(query, (data,))
+    foundtwo = cursor.fetchone()
 
-    if found is None:
+    if found is None and foundtwo is None:
         return jsonify({"status": "error"})
 
     query = ('DELETE FROM adminaccounts WHERE pin = %s')
@@ -130,9 +130,9 @@ def close():
 @app.route('/api/modify-account', methods=['POST'])
 def modify():
     data = request.get_json()
-    account = data.account
-    name = data.name
-    password = data.password
+    account = data['account']
+    name = data['name']
+    password = data['password']
     role = 'admin'
 
     db = db_pool.get_connection()
@@ -140,30 +140,32 @@ def modify():
 
     query = ('SELECT * FROM adminaccounts WHERE pin = %s')
 
-    cursor.execute(query, (username, account,))
+    cursor.execute(query, (account,))
     found = cursor.fetchone()
 
     if found is None:
         query = ('SELECT * FROM useraccounts WHERE pin = %s')
-        cursor.execute(query, (username, account,))
+        cursor.execute(query, (account,))
         found = cursor.fetchone()
         if found is None:
             return jsonify({"error": "Invalid account."})
         role = 'user'
 
-    if name is not "":
+    if name != "":
         query = (f'UPDATE {role}accounts SET name = %s WHERE pin = %s')
         cursor.execute(query, (name, account))
         db.commit()
 
-    if password is not "":
+    if password != "":
         query = (f'UPDATE {role}accounts SET Password = %s WHERE pin = %s')
         cursor.execute(query, (password, account))
         db.commit()
     cursor.close()
     db.close()
 
-@app.route('/api/balance', methods=['GET'])
+    return jsonify({"status": "ok"})
+
+@app.route('/api/balance', methods=['POST'])
 def checkBalance():
     data = request.json 
 
@@ -177,64 +179,70 @@ def checkBalance():
 
     cursor.close()
     db.close()
-
-    result = {"message": found['amount'], "status": "ok"}
     
-    return jsonify(result)
+    return jsonify({"amount": found['amount']})
 
 @app.route('/api/change-balance', methods=['POST'])
 def changeBalance():
     data = request.json 
+    account = data['account']
+    task = data['task']
+    amount = float(data['amount'])
 
     db = db_pool.get_connection()
     cursor = db.cursor(dictionary=True)
 
     query = ('SELECT * FROM useraccounts WHERE pin = %s')
 
-    cursor.execute(query, (data.account,))
+    cursor.execute(query, (account,))
     result = cursor.fetchone()['amount']
-    if data.task is "with":
-        result -= data.amount
+    if task == "with":
+        result -= amount
     else:
-        result += data.amount
+        result += amount
 
     query = ('UPDATE useraccounts SET amount = %s WHERE pin = %s')
-    cursor.execute(query, (result, data.account))
+    cursor.execute(query, (result, account))
+    db.commit()
 
     cursor.close()
     db.close()
-    
-    return jsonify(result)
+
+    return jsonify({"status": "ok"})
 
 @app.route('/api/transfer', methods=['POST'])
 def transfer():
     data = request.json 
+    account = data['account']
+    otherAccount = data['otherAccount']
+    amount = float(data['amount'])
 
     db = db_pool.get_connection()
     cursor = db.cursor(dictionary=True)
 
     query = ('SELECT * FROM useraccounts WHERE pin = %s')
 
-    cursor.execute(query, (data.account,))
+    cursor.execute(query, (account,))
     result = cursor.fetchone()['amount']
-    result -= data.amount
+    result -= amount
 
     query = ('UPDATE useraccounts SET amount = %s WHERE pin = %s')
-    cursor.execute(query, (result, data.account))
+    cursor.execute(query, (result, account))
 
     query = ('SELECT * FROM useraccounts WHERE pin = %s')
 
-    cursor.execute(query, (data.newAccount,))
+    cursor.execute(query, (otherAccount,))
     result = cursor.fetchone()['amount']
-    result += data.amount
+    result += amount
 
     query = ('UPDATE useraccounts SET amount = %s WHERE pin = %s')
-    cursor.execute(query, (result, newAccount))
+    cursor.execute(query, (result, otherAccount))
+    db.commit()
 
     cursor.close()
     db.close()
+    return jsonify({"status": "ok"})
     
-    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

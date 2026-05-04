@@ -62,36 +62,43 @@ function App() {
   const checkBalance = async () => {
     try {
       const response = await fetch('http://127.0.0.1:5001/api/balance', {
-        method: 'GET',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(accountNum),
       });
       const data = await response.json();
-      document.getElementById("balance").textContent = `Your balance is ${data.amount}`;
+      document.getElementById("balance").textContent = `Your balance is $${data.amount}`;
     } catch (error) {
       console.error("Error connecting to Python:", error);
     }
-    setAccountNum("");
   };
 
-  const changeBalance = async (task) => {
-    const info = {
-      task: task,
-      account: accountNum,
-      amount: amount
-    }
-    try {
-      fetch('http://127.0.0.1:5001/api/change-balance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(info),
-      });
-      const p = document.createElement('p');
-      if (task == "with"){
-        p.textContent = `You withdrew $${amount} successfully.`;
+    const changeBalance = async (task) => {
+      const info = {
+        task: task,
+        account: accountNum,
+        amount: amount
       }
-      else{
-        p.textContent = `You deposited $${amount} successfully.`;
+      try {
+        const response = await fetch('http://127.0.0.1:5001/api/change-balance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(info),
+      });
+      const data = await response.json();
+      const p = document.createElement('p');
+      if (data.status == "ok")
+      {
+          if (task == "with"){
+            p.textContent = `You withdrew $${amount} successfully.`;
+          }
+          else{
+            p.textContent = `You deposited $${amount} successfully.`;
+          }
+      }
+      else
+      {
+        p.textContent = "Failed";
       }
       const section = document.querySelector(`#${task}Screen`);
       section.prepend(p);
@@ -99,7 +106,7 @@ function App() {
     } catch (error) {
       console.error("Error connecting to Python:", error);
     }
-    setAccountNum("");
+    setAmount("");
   };
 
   const transfer = async () => {
@@ -109,20 +116,29 @@ function App() {
       amount: amount
     }
     try {
-      fetch('http://127.0.0.1:5001/api/deposit', {
+       const response = await fetch('http://127.0.0.1:5001/api/transfer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(info),
       });
+      const data = await response.json();
       const p = document.createElement('p');
-      p.textContent = `You transferred ${amount} to ${newAccount}successfully.`;
+      if (data.status == "ok")
+      {
+          p.textContent = `You transferred $${amount} to ${newAccount} successfully.`;
+      }
+      else
+      {
+        p.textContent = "Failed";
+      }
       const section = document.querySelector('#transferScreen');
       section.prepend(p);
       removeAfterDelay(p);
     } catch (error) {
       console.error("Error connecting to Python:", error);
     }
-    setAccountNum("");
+    setNewAccount("");
+    setAmount("");
   };
 
   const createAccount = async () => {
@@ -141,17 +157,14 @@ function App() {
       const data = await response.json();
       if (data.status == "ok")
       {
-          setCurrentScreen(role);
           p.textContent = `Created ${newRole} account ${data.message}`;
-          const section = document.querySelector('#adminScreen');
-          section.prepend(p);
       }
       else
       {
         p.textContent = "Failed to create account.";
-        const section = document.querySelector('#createScreen');
-        section.prepend(p);
       }
+      const section = document.querySelector('#createScreen');
+      section.prepend(p);
       removeAfterDelay(p);
     } catch (error) {
       console.error("Error connecting to Python:", error);
@@ -170,17 +183,14 @@ function App() {
       const p = document.createElement('p');
       if (data.status == "ok")
       {
-          setCurrentScreen(role);
           p.textContent = `Closed account ${newAccount}`;
-          const section = document.querySelector('#adminScreen');
-          section.prepend(p);
       }
       else
       {
-        p.textContent = "Failed to close account.";
-        const section = document.querySelector('#closeScreen');
-        section.prepend(p);
+        p.textContent = "Account not found.";
       }
+      const section = document.querySelector('#closeScreen');
+      section.prepend(p);
       removeAfterDelay(p);
     } catch (error) {
       console.error("Error connecting to Python:", error);
@@ -201,19 +211,18 @@ function App() {
         body: JSON.stringify(modifyInfo),
       });
       const data = await response.json();
+      const p = document.createElement('p');
       if (data.status == "ok")
       {
-          setCurrentScreen(role);
           p.textContent = `Modified account ${newAccount}`;
-          const section = document.querySelector('#adminScreen');
-          section.prepend(p);
       }
       else
       {
         p.textContent = "Failed to modify account";
-        const section = document.querySelector('#modifyScreen');
-        section.prepend(p);
       }
+      const section = document.querySelector('#modifyScreen');
+      section.prepend(p);
+      removeAfterDelay(p);
     } catch (error) {
       console.error("Error connecting to Python:", error);
     }
@@ -245,12 +254,12 @@ function App() {
             onChange={(e) => setAccountNum(e.target.value)} 
           />
         <input 
-          type="text" 
+          type="password" 
           placeholder="Enter PIN" 
           value={pin} 
           onChange={(e) => setPin(e.target.value)} />
           <button onClick={(e) => logging(e)}>Login</button>
-          <button onClick={() => setCurrentScreen('role')}>Go Back</button>
+          <button onClick={() => {setCurrentScreen('role'); setAccountNum('')}}>Go Back</button>
         </section>
       )}
 
@@ -260,8 +269,8 @@ function App() {
           <h1>What would you like to do?</h1>
           <button onClick={() => setCurrentScreen('open')}> Open Account </button>
           <button onClick={() => setCurrentScreen('close')}> Close Account </button>
-          <button onClick={() => setCurrentScreen('modify')}> modify Account </button>
-          <button onClick={() => setCurrentScreen('role')}>Logout</button>
+          <button onClick={() => setCurrentScreen('modify')}> Modify Account </button>
+          <button onClick={() => {setCurrentScreen('role'); setAccountNum('')}}>Logout</button>
         </section>
       )}
 
@@ -273,14 +282,14 @@ function App() {
           <button onClick={() => setCurrentScreen('withdraw')}> Withdraw </button>
           <button onClick={() => setCurrentScreen('deposit')}> Deposit </button>
           <button onClick={() => setCurrentScreen('transfer')}> Transfer </button>
-          <button onClick={() => setCurrentScreen('role')}>Logout</button>
+          <button onClick={() => {setCurrentScreen('role'); setAccountNum('')}}>Logout</button>
         </section>
       )}
 
       {currentScreen === 'balance' && (
         <section id="balScreen">
           <h1>Check Balance</h1>
-          <h3 id="balance"></h3>
+          <h3 id="balance">:(</h3>
           <button onClick={() => setCurrentScreen(role)}>Go Back</button>
         </section>
       )}
@@ -345,7 +354,7 @@ function App() {
             onChange={(e) => setNewName(e.target.value)} 
           />
         <input 
-          type="text" 
+          type="password" 
           placeholder="Enter password" 
           value={pin} 
           onChange={(e) => setPin(e.target.value)} />
@@ -389,7 +398,7 @@ function App() {
           }} />
 
         <input 
-          type="text" 
+          type="password" 
           placeholder="Enter new password" 
           value={pin} 
           onChange={(e) => {
