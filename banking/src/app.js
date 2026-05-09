@@ -266,7 +266,7 @@ function App() {
       {currentScreen === 'admin' && (
         <section id="adminScreen">
           <h1>Welcome, {name}!</h1>
-          <h1>What would you like to do?</h1>
+          <h3>What would you like to do?</h3>
           <button onClick={() => setCurrentScreen('open')}> Open Account </button>
           <button onClick={() => setCurrentScreen('close')}> Close Account </button>
           <button onClick={() => setCurrentScreen('modify')}> Modify Account </button>
@@ -277,7 +277,7 @@ function App() {
       {currentScreen === 'user' && (
         <section id="userScreen">
           <h1>Welcome, {name}!</h1>
-          <h1>What would you like to do?</h1>
+          <h3>What would you like to do?</h3>
           <button onClick={() => {setCurrentScreen('balance'); checkBalance()}}> Check Balance </button>
           <button onClick={() => setCurrentScreen('withdraw')}> Withdraw </button>
           <button onClick={() => setCurrentScreen('deposit')}> Deposit </button>
